@@ -199,6 +199,8 @@ class LSM9DS1:
         self._write_u8(_XGTYPE, _LSM9DS1_REGISTER_CTRL_REG6_XL, 0xC0)
         # enable mag continuous
         self._write_u8(_MAGTYPE, _LSM9DS1_REGISTER_CTRL_REG3_M, 0x00)
+        # set mag data rate 
+        self._write_u8(_MAGTYPE, _LSM9DS1_REGISTER_CTRL_REG1_M, 0x1C)
         # Set default ranges for the various sensors
         self._accel_mg_lsb = None
         self._mag_mgauss_lsb = None
