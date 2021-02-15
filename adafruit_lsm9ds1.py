@@ -60,13 +60,13 @@ _LSM9DS1_GYRO_DPS_DIGIT_245DPS = 0.00875
 _LSM9DS1_GYRO_DPS_DIGIT_500DPS = 0.01750
 _LSM9DS1_GYRO_DPS_DIGIT_2000DPS = 0.07000
 _LSM9DS1_TEMP_LSB_DEGREE_CELSIUS = 8  # 1°C = 8, 25° = 200, etc.
-_LSM9DS1_ACCEL_ODR_PD = 0
-_LSM9DS1_ACCEL_ODR_10 = 10
-_LSM9DS1_ACCEL_ODR_50 = 50
-_LSM9DS1_ACCEL_ODR_119 = 119
-_LSM9DS1_ACCEL_ODR_238 = 238
-_LSM9DS1_ACCEL_ODR_476 = 476
-_LSM9DS1_ACCEL_ODR_952 = 952
+#_LSM9DS1_ACCEL_ODR_PD = 0
+#_LSM9DS1_ACCEL_ODR_10 = 10
+#_LSM9DS1_ACCEL_ODR_50 = 50
+#_LSM9DS1_ACCEL_ODR_119 = 119
+#_LSM9DS1_ACCEL_ODR_238 = 238
+#_LSM9DS1_ACCEL_ODR_476 = 476
+#_LSM9DS1_ACCEL_ODR_952 = 952
 _LSM9DS1_MAG_ODR_0625 = 0.625
 _LSM9DS1_MAG_ODR_125 = 1.25
 _LSM9DS1_MAG_ODR_250 = 2.5
@@ -140,13 +140,13 @@ MAGGAIN_16GAUSS = 0b11 << 5  # +/- 16 gauss
 GYROSCALE_245DPS = 0b00 << 3  # +/- 245 degrees/s rotation
 GYROSCALE_500DPS = 0b01 << 3  # +/- 500 degrees/s rotation
 GYROSCALE_2000DPS = 0b11 << 3  # +/- 2000 degrees/s rotation
-ACCEL_ODR_PD = 0b000 << 5
-ACCEL_ODR_10 = 0b001 << 5
-ACCEL_ODR_50 = 0b010 << 5
-ACCEL_ODR_119 = 0b011 << 5
-ACCEL_ODR_238 = 0b100 << 5
-ACCEL_ODR_476 = 0b101 << 5
-ACCEL_ODR_952 = 0b110 << 5
+#ACCEL_ODR_PD = 0b000 << 5
+#ACCEL_ODR_10 = 0b001 << 5
+#ACCEL_ODR_50 = 0b010 << 5
+#ACCEL_ODR_119 = 0b011 << 5
+#ACCEL_ODR_238 = 0b100 << 5
+#ACCEL_ODR_476 = 0b101 << 5
+#ACCEL_ODR_952 = 0b110 << 5
 MAG_ODR_0625 = 0b000 << 2
 MAG_ODR_125 = 0b001 << 2
 MAG_ODR_250 = 0b010 << 2
@@ -284,7 +284,85 @@ class LSM9DS1:
             self._gyro_dps_digit = _LSM9DS1_GYRO_DPS_DIGIT_500DPS
         elif val == GYROSCALE_2000DPS:
             self._gyro_dps_digit = _LSM9DS1_GYRO_DPS_DIGIT_2000DPS
+    
+    @property
+    def gyro_odr(self):
+        """The gyroscope data rate.  Must be a value of:
+        - GYRO_ODR_PD
+        - GYRO_ODR_149
+        - GYRO_ODR_595
+        - GYRO_ODR_119
+        - GYRO_ODR_238
+        - GYRO_ODR_476
+        - GYRO_ODR_952
+        """
+        reg = self._read_u8(_XGTYPE, _LSM9DS1_REGISTER_CTRL_REG1_G)
+        return (reg & 0b11100000) & 0xFF
 
+    @gyro_odr.setter
+    def gyro_odr(self, val):
+        assert val in (GYRO_ODR_PD, GYRO_ODR_149, GYRO_ODR_595, GYRO_ODR_119, GYRO_ODR_238, GYRO_ODR_476, GYRO_ODR_952)
+        reg = self._read_u8(_XGTYPE, _LSM9DS1_REGISTER_CTRL_REG1_G)
+        reg = (reg & ~(0b11100000)) & 0xFF
+        reg |= val
+        self._write_u8(_XGTYPE, _LSM9DS1_REGISTER_CTRL_REG1_G, reg)
+        """Assumed that this is not needed, but had already created. So I left it in. self._accel_odr never set to None like self._accel_mg_lsb
+        if val == GYRO_ODR_PD:
+            self._accel_odr = _LSM9DS1_GYRO_ODR_PD
+        elif val == GYRO_ODR_149:
+            self._accel_odr = _LSM9DS1_GYRO_ODR_149
+        elif val == GYRO_ODR_595:
+            self._accel_odr = _LSM9DS1_GYRO_ODR_595
+        elif val == GYRO_ODR_119:
+            self._accel_odr = _LSM9DS1_GYRO_ODR_119
+        elif val == GYRO_ODR_238:
+            self._accel_odr = _LSM9DS1_GYRO_ODR_238
+        elif val == GYRO_ODR_476:
+            self._accel_mg_lsb = _LSM9DS1_GYRO_ODR_476
+        elif val == GYRO_ODR_952:
+            self._accel_odr = _LSM9DS1_GYRO_ODR_952
+        """
+    @property
+    def mag_odr(self):
+        """The accelerometer data rate.  Must be a value of:
+        - MAG_ODR_0625
+        - MAG_ODR_125
+        - MAG_ODR_250
+        - MAG_ODR_5
+        - MAG_ODR_10
+        - MAG_ODR_20
+        - MAG_ODR_40
+        - MAG_ODR_80
+        """
+        reg = self._read_u8(_MAGTYPE, _LSM9DS1_REGISTER_CTRL_REG1_M)
+        return (reg & 0b00011100) & 0xFF
+
+    @gmag_odr.setter
+    def mag_odr(self, val):
+        assert val in (MAG_ODR_0625, MAG_ODR_125, MAG_ODR_250, MAG_ODR_5, MAG_ODR_10, MAG_ODR_20, MAG_ODR_40, MAG_ODR_80)
+        reg = self._read_u8(_MAGTYPE, _LSM9DS1_REGISTER_CTRL_REG1_M)
+        reg = (reg & ~(0b00011100)) & 0xFF
+        reg |= val
+        self._write_u8(_MAGTYPE, _LSM9DS1_REGISTER_CTRL_REG1_M, reg)
+        """Assumed that this is not needed, but had already created. So I left it in. self._mag_odr never set to None like self._accel_mg_lsb
+        if val == MAG_ODR_0625:
+            self._mag_odr = _LSM9DS1_MAG_ODR_0625 
+        elif val == MAG_ODR_125:
+            self._mag_odr = _LSM9DS1_MAG_ODR_125 
+        elif val == MAG_ODR_250:
+            self._mag_odr = _LSM9DS1_MAG_ODR_250
+        elif val == MAG_ODR_5:
+            self._mag_odr = _LSM9DS1_MAG_ODR_5
+        elif val == MAG_ODR_10:
+            self._mag_odr = _LSM9DS1_MAG_ODR_10
+        elif val == MAG_ODR_20:
+            self._mag_odr = _LSM9DS1_MAG_ODR_20
+        elif val == MAG_ODR_40:
+            self._mag_odr = _LSM9DS1_MAG_ODR_40
+        elif val == MAG_ODR_80:
+            self._mag_odr = _LSM9DS1_MAG_ODR_80
+        """
+            
     def read_accel_raw(self):
         """Read the raw accelerometer sensor values and return it as a
         3-tuple of X, Y, Z axis values that are 16-bit unsigned values.  If you
